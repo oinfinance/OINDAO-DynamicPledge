@@ -12,30 +12,33 @@ contract Dparam is Owned, WhiteList, IDparam {
     /// @notice Subscription ratio token -> coin
     uint256 public stakeRate = 35;
     /// @notice The collateral rate of liquidation
-    uint256 public liquidationLine = 110;
-    /// @notice Redemption rate 0.3%
-    uint256 public feeRate = 3;
+    uint256 public liquidationLine = 200;
+    ///@notice Funds rate 0.5%
+    uint256 public fundsRate = 5;
 
-    /// @notice Minimum number of COINS for the first time
-    uint256 public minMint = 100 * ONE;
     uint256 constant ONE = 1e8;
     ///@notice UpperLimit for COINS for the System.
     uint256 public coinUpperLimit = 5000 * 1e8;
-    ///@notice LowLimit for COINS for the System.
-    uint256 public coinLowLimit = 200 * 1e8;
     ///@notice Set the cost of the Stake
     uint256 public cost = 7;
-
+    uint256 public claimRequirment = 5;
+    uint256 public totalToken;
+    uint256 public totalCoin;
     event StakeRateEvent(uint256 stakeRate);
-    /// @notice Reset fee event
-    event FeeRateEvent(uint256 feeRate);
+    ////@notice Reset funds Rate event
+    event FundsRateEvent(uint256 fundsRate);
     /// @notice Reset liquidationLine event
     event LiquidationLineEvent(uint256 liquidationRate);
-    /// @notice Reset minMint event
-    event MinMintEvent(uint256 minMint);
+    /// @notice Reset cost event
     event CostEvent(uint256 cost, uint256 price);
+    /// @notice Reset coinUpperLimit event
     event CoinUpperLimitEvent(uint256 coinUpperLimit);
-    event CoinLowLimitEvent(uint256 coinLowLimit);
+    /// @notice Reset totalToken event
+    event SetTotalTokenEvent(uint256 totalToken);
+    /// @notice Reset totalCoin event
+    event SetTotalCoinEvent(uint256 totalCoin);
+    /// @notice Reset claimRequirment event
+    event ClaimRequirmentEvent(uint256 claimRequirment);
 
     /**
      * @notice Construct a new Dparam, owner by msg.sender
@@ -43,12 +46,12 @@ contract Dparam is Owned, WhiteList, IDparam {
     constructor() public Owned(msg.sender) {}
 
     /**
-     * @notice Reset feeRate
-     * @param _feeRate New number of feeRate
+     * @notice Reset fundsRate
+     * @param _fundsRate New number of fundsRate
      */
-    function setFeeRate(uint256 _feeRate) external onlyWhiter {
-        feeRate = _feeRate;
-        emit FeeRateEvent(feeRate);
+    function setFundsRate(uint256 _fundsRate) external onlyWhiter {
+        fundsRate = _fundsRate;
+        emit FundsRateEvent(fundsRate);
     }
 
     /**
@@ -61,21 +64,30 @@ contract Dparam is Owned, WhiteList, IDparam {
     }
 
     /**
-     * @notice Reset minMint
-     * @param _minMint New number of minMint
-     */
-    function setMinMint(uint256 _minMint) external onlyWhiter {
-        minMint = _minMint;
-        emit MinMintEvent(minMint);
-    }
-
-    /**
      * @notice Reset stakeRate
      * @param _stakeRate New number of stakeRate
      */
     function setStakeRate(uint256 _stakeRate) external onlyWhiter {
         stakeRate = _stakeRate;
         emit StakeRateEvent(stakeRate);
+    }
+
+     /**
+     * @notice Reset totalToken
+     * @param _totalToken New number of totalToken
+     */
+    function setTotalToken(uint256 _totalToken) external onlyWhiter {
+        totalToken = _totalToken;
+        emit SetTotalTokenEvent(totalToken);
+    }
+    
+     /**
+     * @notice Reset totalCoin
+     * @param _totalCoin New number of totalCoin
+     */
+    function setTotalCoin(uint256 _totalCoin) external onlyWhiter {
+        totalCoin = _totalCoin;
+        emit SetTotalCoinEvent(totalCoin);
     }
 
     /**
@@ -88,15 +100,15 @@ contract Dparam is Owned, WhiteList, IDparam {
     }
 
     /**
-     * @notice Reset coinLowLimit
-     * @param _coinLowLimit New number of coinLowLimit
+     * @notice Reset claimRequirment
+     * @param _claimRequirment New number of _claimRequirment
      */
-    function setCoinLowLimit(uint256 _coinLowLimit) external onlyWhiter {
-        coinLowLimit = _coinLowLimit;
-        emit CoinLowLimitEvent(coinLowLimit);
+    function setClaimRequirment(uint256 _claimRequirment) external onlyWhiter {
+        claimRequirment = _claimRequirment;
+        emit ClaimRequirmentEvent(claimRequirment);
     }
-
-    /**
+    
+        /**
      * @notice Reset cost
      * @param _cost New number of _cost
      * @param price New number of price
@@ -107,23 +119,6 @@ contract Dparam is Owned, WhiteList, IDparam {
         emit CostEvent(cost, price);
     }
 
-    /**
-     * @notice Check Is it below the clearing line
-     * @param price The token/usdt price
-     * @return Whether the clearing line has been no exceeded
-     */
-    function isLiquidation(uint256 price) external view returns (bool) {
-        return price.mul(stakeRate).mul(100) <= liquidationLine.mul(ONE);
-    }
-
-    /**
-     * @notice Determine if the exchange value at the current rate is less than cost
-     * @param price The token/usdt price
-     * @return The value of Checking
-     */
-    function isNormal(uint256 price) external view returns (bool) {
-        return price.mul(stakeRate) >= ONE.mul(cost);
-    }
 
     /**
      * @notice Verify that the amount of Staking in the current system has reached the upper limit
@@ -133,13 +128,18 @@ contract Dparam is Owned, WhiteList, IDparam {
     function isUpperLimit(uint256 totalCoin) external view returns (bool) {
         return totalCoin <= coinUpperLimit;
     }
-
-    /**
-     * @notice Verify that the amount of Staking in the current system has reached the lowest limit
-     * @param totalCoin The number of the Staking COINS
-     * @return The value of Checking
+    
+       /**
+     * @notice Check Is it below the clearing line
+     * @param price The token/usdt price
+     * @return Whether the clearing line has been no exceeded
      */
-    function isLowestLimit(uint256 totalCoin) external view returns (bool) {
-        return totalCoin >= coinLowLimit;
+    function isLiquidation(uint256 price) external view returns (bool) {
+        if(totalCoin == 0){
+            return false;
+        }else{
+            return totalToken.mul(price).div(totalCoin).mul(100) <= liquidationLine.mul(ONE);
+        }
+      
     }
 }

@@ -9,10 +9,14 @@ interface ITokenStake {
 }
 
 contract Esm is Owned, WhiteList {
+    /// @notice Access deposit pause
+    uint256 public depositLive = 1;
+    /// @notice Access withdraw pause
+    uint256 public withdrawLive = 1;
     /// @notice Access stake pause
-    uint256 public stakeLive = 1;
-    /// @notice Access redeem pause
-    uint256 public redeemLive = 1;
+    uint256 public generateLive = 1;
+    /// @notice Access withdraw pause
+    uint256 public paybackLive = 1;
     /// @notice System closed time
     uint256 public time;
     /// @notice TokenStake for updating on closed
@@ -35,45 +39,89 @@ contract Esm is Owned, WhiteList {
     }
 
     /**
-     * @notice Open stake, if stake pasued
+     * @notice Open deposit, if deposit pasued
      */
-    function openStake() external onlyWhiter {
-        stakeLive = 1;
+    function openDeposit() external onlyWhiter {
+        depositLive = 1;
     }
 
     /**
-     * @notice Paused stake, if stake opened
+     * @notice Paused deposit, if deposit opened
      */
-    function pauseStake() external onlyWhiter {
-        stakeLive = 0;
+    function pauseDeposit() external onlyWhiter {
+        depositLive = 0;
+    }
+
+      /**
+     * @notice Open withdraw, if withdraw paused
+     */
+    function openWithdraw() external onlyWhiter {
+        withdrawLive = 1;
     }
 
     /**
-     * @notice Open redeem, if redeem paused
+     * @notice Pause withdraw, if withdraw opened
      */
-    function openRedeem() external onlyWhiter {
-        redeemLive = 1;
+    function pauseWithdraw() external onlyWhiter {
+        withdrawLive = 0;
     }
 
     /**
-     * @notice Pause redeem, if redeem opened
+     * @notice Open generate, if generate pasued
      */
-    function pauseRedeem() external onlyWhiter {
-        redeemLive = 0;
+    function openGenerate() external onlyWhiter {
+        generateLive = 1;
     }
 
     /**
-     * @notice Status of staking
+     * @notice Paused generate, if generate opened
      */
-    function isStakePaused() external view returns (bool) {
-        return stakeLive == 0;
+    function pauseGenerate() external onlyWhiter {
+        generateLive = 0;
+    }
+
+     /**
+     * @notice Open payback, if payback pasued
+     */
+    function openPayback() external onlyWhiter {
+        paybackLive = 1;
     }
 
     /**
-     * @notice Status of redeem
+     * @notice Paused payback, if payback opened
      */
-    function isRedeemPaused() external view returns (bool) {
-        return redeemLive == 0;
+    function pausePayback() external onlyWhiter {
+        paybackLive = 0;
+    }
+
+  
+
+    /**
+     * @notice Status of deposit
+     */
+    function isDepositPaused() external view returns (bool) {
+        return depositLive == 0;
+    }
+
+    /**
+     * @notice Status of withdraw
+     */
+    function isWithdrawPaused() external view returns (bool) {
+        return withdrawLive == 0;
+    }
+
+    /**
+     * @notice Status of generate
+     */
+    function isGeneratePaused() external view returns (bool) {
+        return generateLive == 0;
+    }
+
+    /**
+     * @notice Status of payback
+     */
+    function isPaybackPaused() external view returns (bool) {
+        return paybackLive == 0;
     }
 
     /**
@@ -85,7 +133,7 @@ contract Esm is Owned, WhiteList {
 
     /**
      * @notice If anything error, project manager can shutdown it
-     *         anybody cant stake, but can redeem
+     *         anybody cant stake, but can withdraw
      */
     function shutdown() external onlyWhiter {
         require(time == 0, "System closed yet.");

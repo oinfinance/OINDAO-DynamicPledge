@@ -45,7 +45,7 @@ contract Oracle is Owned, WhiteList {
     constructor(address _esm,address _params) public Owned(msg.sender) {
         esm = IEsm(_esm);
         params = IParams(_params);
-        name = "OIN-USDO3";
+        name = "OIN-USDO";
     }
 
     /**
