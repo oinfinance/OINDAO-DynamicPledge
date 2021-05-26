@@ -225,7 +225,7 @@ contract OinStake is Owned, WhiteList {
             address feeOrcl
         )
     {
-        return (address(esm), address(param), address(orcl), address(feeOrcl));
+        return (esm, param, orcl, orcl);
     }
 
     /**
@@ -580,7 +580,7 @@ contract OinStake is Owned, WhiteList {
             uint256 fundsTokenAmount = _getFundsFee(from);
             //Calculation of feeToken Amount 计算应付手续费的数量
             uint256 feeTokenAmount =
-                fundsTokenAmount.mul(orcl.val()).div(feeOrcl.val());
+                fundsTokenAmount.mul(1e8).div(feeOrcl.val());
             require(
                 feeToken.balanceOf(from) >= feeTokenAmount,
                 "Insufficient balance of stability token in current account"
@@ -614,7 +614,7 @@ contract OinStake is Owned, WhiteList {
         uint256 fundsTokenAmount = _getFundsFee(from);
         //Calculation of feeToken Amount 计算应付手续费的数量
         uint256 feeTokenAmount =
-            fundsTokenAmount.mul(orcl.val()).div(feeOrcl.val());
+            fundsTokenAmount.mul(1e8).div(feeOrcl.val());
         require(
             feeToken.balanceOf(from) >= feeTokenAmount,
             "Insufficient balance of stability token in current account"
